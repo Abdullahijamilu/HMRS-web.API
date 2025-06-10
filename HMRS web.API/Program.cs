@@ -1,8 +1,11 @@
-
 using HMRS_web.API.Models;
 using HMRS_web.API.Services.Interface;
 using HMRS_web.API.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Identity; // <--- Add this namespace
 
 namespace HMRS_web.API
 {
@@ -13,17 +16,21 @@ namespace HMRS_web.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<HmrsContext>(options =>
-   options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            var app = builder.Build();
 
+            // Register your DbContext
+            builder.Services.AddDbContext<HmrsContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+            builder.Services.AddIdentity<User, ApplicationRole>()
+                    .AddEntityFrameworkStores<HmrsContext>()
+                    .AddDefaultTokenProviders(); 
+                                                
             builder.Services.AddScoped<JwtServices>();
-            builder.Services.AddScoped<iAuthenticateServices, AuthenticateServices>();
+            builder.Services.AddScoped<IAuthenticateServices, AuthenticateServices>();
 
             builder.Services.AddAuthentication(options =>
             {
@@ -43,6 +50,8 @@ namespace HMRS_web.API
                 };
             });
 
+            var app = builder.Build();
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -51,12 +60,8 @@ namespace HMRS_web.API
             }
 
             app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
+            app.UseAuthorization(); // This should come after UseAuthentication if you have it, but for Identity, it's generally fine here.
             app.MapControllers();
-
             app.Run();
         }
     }

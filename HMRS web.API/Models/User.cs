@@ -18,3 +18,8 @@ public partial class User : IdentityUser<Guid>
 
     public virtual JobRole JobRole { get; set; } = null!;
 }
+
+public class ApplicationRole : IdentityRole<Guid>
+{
+    // Optional: Add any custom properties for your roles
+}
