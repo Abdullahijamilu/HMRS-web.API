@@ -35,7 +35,11 @@ namespace HMRS_web.API.Controllers
                 return Unauthorized(new { Message = result.Message });
             }
 
-            return Ok(new { Message = "Login Successful" });
+            return Ok(new
+            {
+                Message = "Login successful",
+                Token = result.Data
+            });
         }
         [HttpPost("Register")]
         public async Task<IActionResult> CreateUser([FromBody] RegisterDTO request)

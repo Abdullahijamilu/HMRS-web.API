@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HMRS_web.API.Models;
 
@@ -13,9 +15,9 @@ public partial class File
 
     public string? FilePath { get; set; }
 
-    public Guid? UploadedBy { get; set; }
+    public string? UploadedBy { get; set; }
 
     public DateTime? UploadedAt { get; set; }
-
-    public virtual User? UploadedByNavigation { get; set; }
+    [ForeignKey("UploadedBy")]
+    public virtual ApplicationUser User { get; set; }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace HMRS_web.API.Models;
 
@@ -7,7 +9,7 @@ public partial class Employee
 {
     public Guid Id { get; set; }
 
-    public Guid UserId { get; set; }
+    public string UserId { get; set; } = null!;
 
     public string FullName { get; set; } = null!;
 
@@ -24,6 +26,8 @@ public partial class Employee
     public string? CvfilePath { get; set; }
 
     public virtual Department? Department { get; set; }
+    [ForeignKey("UploadedBy")]
+    public virtual ApplicationUser User { get; set; }
 
     public virtual ICollection<Evaluation> EvaluationEmployees { get; set; } = new List<Evaluation>();
 
@@ -34,6 +38,4 @@ public partial class Employee
     public virtual ICollection<LeaveRequest> LeaveRequestApprovedByNavigations { get; set; } = new List<LeaveRequest>();
 
     public virtual ICollection<LeaveRequest> LeaveRequestEmployees { get; set; } = new List<LeaveRequest>();
-
-    public virtual User User { get; set; } = null!;
 }

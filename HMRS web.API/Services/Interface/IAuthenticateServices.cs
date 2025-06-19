@@ -7,6 +7,6 @@ namespace HMRS_web.API.Services.Interface
     public interface IAuthenticateServices
     {
         Task<IdentityResult> RegisterUser(RegisterDTO user);
-        Task<ResponseModel<User>> ValidateUser(LoginDTO model);
+        Task<ResponseModel<LoginDTO>> ValidateUser(LoginDTO model);
     }
 }

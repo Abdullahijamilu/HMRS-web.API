@@ -1,42 +1,51 @@
-using HMRS_web.API.Models;
+﻿using HMRS_web.API.Models;
 using HMRS_web.API.Services.Interface;
 using HMRS_web.API.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Identity;
+using Serilog;
 using System.Text;
-using Microsoft.AspNetCore.Identity; // <--- Add this namespace
 
 namespace HMRS_web.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Setup Serilog
+            var _logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Configuration)
+                .Enrich.FromLogContext()
+                .CreateLogger();
+            builder.Logging.ClearProviders();
+            builder.Logging.AddSerilog(_logger);
+
+            // Add services to the container
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddAuthorization();
 
-            // Register your DbContext
+            // Add EF Core
             builder.Services.AddDbContext<HmrsContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            // Correct Identity setup
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<HmrsContext>()
+                .AddDefaultTokenProviders();
 
-            builder.Services.AddIdentity<User, ApplicationRole>()
-                    .AddEntityFrameworkStores<HmrsContext>()
-                    .AddDefaultTokenProviders(); 
-                                                
-            builder.Services.AddScoped<JwtServices>();
-            builder.Services.AddScoped<IAuthenticateServices, AuthenticateServices>();
-
+            // JWT Authentication
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(options =>
+            })
+            .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -50,9 +59,26 @@ namespace HMRS_web.API
                 };
             });
 
+            // Register custom services
+            builder.Services.AddScoped<JwtServices>();
+            builder.Services.AddScoped<IAuthenticateServices, AuthenticateServices>();
+
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+                var roles = new[] { "Admin", "Manager", "Employee" };
+
+                foreach (var role in roles)
+                {
+                    if (!await roleManager.RoleExistsAsync(role))
+                    {
+                        await roleManager.CreateAsync(new IdentityRole(role));
+                    }
+                }
+            }
+            // Configure middleware
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -60,7 +86,8 @@ namespace HMRS_web.API
             }
 
             app.UseHttpsRedirection();
-            app.UseAuthorization(); // This should come after UseAuthentication if you have it, but for Identity, it's generally fine here.
+            app.UseAuthentication(); // ✅ Must come before UseAuthorization
+            app.UseAuthorization();
             app.MapControllers();
             app.Run();
         }

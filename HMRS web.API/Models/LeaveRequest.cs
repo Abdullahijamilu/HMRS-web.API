@@ -5,7 +5,7 @@ namespace HMRS_web.API.Models;
 
 public partial class LeaveRequest
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
 
     public Guid EmployeeId { get; set; }
 

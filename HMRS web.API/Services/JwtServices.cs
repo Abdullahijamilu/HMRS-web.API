@@ -9,33 +9,34 @@ namespace HMRS_web.API.Services
     public class JwtServices
     {
         private readonly IConfiguration _config;
+
         public JwtServices(IConfiguration config)
         {
             _config = config;
         }
-        public string GenerateToken(User user, string role)
-        {
-            var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["jwt:key"]));
-            var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
 
-            var claims = new Claim[]
+        public string GenerateToken(ApplicationUser user, string role)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
             {
-                new Claim (ClaimTypes.Surname, user.UserName),
-                new Claim (ClaimTypes.Role, role),
-                new Claim (ClaimTypes.NameIdentifier, user.Id.ToString())
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName ?? ""),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Role, role)
             };
 
-            JwtSecurityToken jwtSecurityToken = new(
-                issuer: _config["jwt:issuer"],
-                audience: _config["jwt:audience"],
+            var token = new JwtSecurityToken(
+                issuer: _config["jwt:Issuer"],
+                audience: _config["jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(_config["jwt:ExpireMinutes"])),
-                signingCredentials: credentials);
+                expires: DateTime.UtcNow.AddMinutes(Convert.ToDouble(_config["jwt:ExpireMinutes"] ?? "60")),
+                signingCredentials: credentials
+            );
 
-
-            return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }
-
-

@@ -12,6 +12,4 @@ public partial class JobRole
     public string? Description { get; set; }
 
     public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
-
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }
