@@ -24,7 +24,7 @@ public partial class Employee
     public DateOnly? HireDate { get; set; }
 
     public string? CvfilePath { get; set; }
-
+    [ForeignKey("DepartmentId")]
     public virtual Department? Department { get; set; }
     [ForeignKey("UploadedBy")]
     public virtual ApplicationUser User { get; set; }

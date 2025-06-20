@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +24,7 @@ public partial class HmrsContext : IdentityDbContext<ApplicationUser>
         public virtual DbSet<JobRole> JobRoles { get; set; }
         public virtual DbSet<LeaveRequest> LeaveRequests { get; set; }
 
-        // Removed hardcoded connection string — use Program.cs for configuration
+       
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
