@@ -4,6 +4,7 @@ namespace HMRS_web.API.DTO
 {
     public class EUpdateDTO
     {
+        public Guid Id { get; set; }
         [Required]
         public string FullName { get; set; } = null!;
         [Required]

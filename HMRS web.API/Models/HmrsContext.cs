@@ -6,12 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HMRS_web.API.Models;
 
-public partial class HmrsContext : IdentityDbContext<ApplicationUser>
-{    
-        public HmrsContext()
-        {
-        }
-
+public partial class HmrsContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
+{ 
+        
         public HmrsContext(DbContextOptions<HmrsContext> options)
             : base(options)
         {

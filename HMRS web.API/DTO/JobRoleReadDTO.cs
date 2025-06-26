@@ -1,0 +1,16 @@
+﻿using HMRS_web.API.Models;
+
+namespace HMRS_web.API.DTO
+{
+    public class JobRoleReadDTO
+    {
+        public Guid Id { get; set; }
+
+        public string Title { get; set; } = null!;
+
+        public string? Description { get; set; }
+
+        public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
+    }
+}
+

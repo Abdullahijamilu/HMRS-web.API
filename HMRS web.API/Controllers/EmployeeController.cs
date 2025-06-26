@@ -36,7 +36,8 @@ namespace HMRS_web.API.Controllers
                     UserName = eCreate.UserName,
                     Email = eCreate.Email,
                     Password = eCreate.Password,
-                    Role = eCreate.Role
+                    Role = eCreate.Role,
+                    Id = eCreate.Id
                 };
 
                 var result = await this.services.RegisterUser(registerdto);
@@ -69,25 +70,22 @@ namespace HMRS_web.API.Controllers
                     Phone = e.Phone,
                     Address = e.Address,
                     DepartmentId = e.DepartmentId,
-                    HireDate = e.HireDate.HasValue ? e.HireDate.Value.ToDateTime(TimeOnly.MinValue) : DateTime.MinValue,
+                    HireDate = e.HireDate.HasValue ? new DateTime(e.HireDate.Value.Year, e.HireDate.Value.Month, e.HireDate.Value.Day) : DateTime.MinValue,
                     DepartmentName = e.Department != null ? e.Department.Name : null,
                     UserName = e.User != null ? e.User.UserName : null
-                    //Role = Role 
                 })
                 .FirstOrDefaultAsync();
             return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, readDto);
         }
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<EReadDTO>>> GetEmployees()
+        public async Task<ActionResult<IEnumerable<EReadDTO>>> GetEmployee()
         {
             var employees = await this.context.Employees
                 .Select(e => new EReadDTO
                 {
-
                     FullName = e.FullName,
                     JobRole = e.JobRole,
-                    //Salary = e.JobRole != null ? e.JobRole.Salary : null,
-                    HireDate = e.HireDate.HasValue ? e.HireDate.Value.ToDateTime(TimeOnly.MinValue) : DateTime.MinValue,
+                    HireDate = e.HireDate.HasValue ? new DateTime(e.HireDate.Value.Year, e.HireDate.Value.Month, e.HireDate.Value.Day) : DateTime.MinValue,
                     DepartmentName = e.Department != null ? e.Department.Name : null,
                     UserName = e.User != null ? e.User.UserName : null,
                     Role = this.context.UserRoles
@@ -99,6 +97,33 @@ namespace HMRS_web.API.Controllers
 
             return Ok(employees);
         }
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<EReadDTO>> GetEmployee(Guid id)
+        //{
+        //    var employee = await this.context.Employees
+        //        .Where(e => e.Id == id)
+        //        .Select(e => new EReadDTO
+        //        {
+        //            FullName = e.FullName,
+        //            Address = e.Address,
+        //            HireDate = e.HireDate.HasValue ? e.HireDate.Value.ToDateTime(TimeOnly.MinValue) : DateTime.MinValue,
+        //            DepartmentName = e.Department.Name,
+        //            UserName = e.User != null ? e.User.UserName : null,
+        //            Role = this.context.UserRoles
+        //                .Where(ur => ur.UserId == e.UserId)
+        //                .Join(this.context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+        //                .FirstOrDefault()
+        //        })
+        //        .FirstOrDefaultAsync();
+
+        //    if (employee == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return Ok(employee);
+        //}
+
         [HttpGet("{id}")]
         public async Task<ActionResult<EReadDTO>> GetEmployee(Guid id)
         {
@@ -108,7 +133,7 @@ namespace HMRS_web.API.Controllers
                 {
                     FullName = e.FullName,
                     Address = e.Address,
-                    HireDate = e.HireDate.HasValue ? e.HireDate.Value.ToDateTime(TimeOnly.MinValue) : DateTime.MinValue,
+                    HireDate = e.HireDate.HasValue ? new DateTime(e.HireDate.Value.Year, e.HireDate.Value.Month, e.HireDate.Value.Day) : DateTime.MinValue,
                     DepartmentName = e.Department.Name,
                     UserName = e.User != null ? e.User.UserName : null,
                     Role = this.context.UserRoles
@@ -125,45 +150,33 @@ namespace HMRS_web.API.Controllers
 
             return Ok(employee);
         }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetEmployee(int id)
-        {
-            var employee = await this.context.Employees
-                .Where(e => e.Id == id)
-                .Select(e => new EReadDTO
-                {
-                    FullName = e.FullName,
-                    Address = e.Address,
-                    Phone = e.Phone,
-                    HireDate = e.HireDate,
-                    DepartmentName = e.Department.Name,
-                    DepartmentId = e.Department.Id,
-                    JobRole = e.JobRole,
-                    Role = e.Role,
-                })
-                .FirstOrDefaultAsync();
-            if (employee == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(employee);
-        }
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> UpdateEmployee(int id, EUpdateDTO dto)
+        public async Task<IActionResult> UpdateEmployee(Guid id, EUpdateDTO dto)
         {
-            if (id != DTO.Id)
+            if (id != dto.Id)  
             {
                 return BadRequest("ID mismatch");
             }
 
-            var employee = await _context.Employees.FindAsync(id);
+            var employee = await this.context.Employees.FindAsync(id);
             if (employee == null)
             {
                 return NotFound();
             }
+
+            
+            employee.FullName = dto.FullName;
+            employee.Phone = dto.Phone;
+            employee.Address = dto.Address;
+            employee.DepartmentId = dto.DepartmentId;
+
+            
+            this.context.Employees.Update(employee);
+            await this.context.SaveChangesAsync();
+
+            return Ok(employee);   
         }
+    }
 }
 

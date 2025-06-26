@@ -24,22 +24,22 @@ namespace HMRS_web.API
             builder.Logging.ClearProviders();
             builder.Logging.AddSerilog(_logger);
 
-            // Add services to the container
+            
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddAuthorization();
 
-            // Add EF Core
+            
             builder.Services.AddDbContext<HmrsContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Correct Identity setup
+            
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<HmrsContext>()
                 .AddDefaultTokenProviders();
 
-            // JWT Authentication
+            
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -81,6 +81,7 @@ namespace HMRS_web.API
             // Configure middleware
             if (app.Environment.IsDevelopment())
             {
+                app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }

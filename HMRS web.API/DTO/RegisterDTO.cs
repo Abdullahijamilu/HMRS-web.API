@@ -5,6 +5,7 @@ namespace HMRS_web.API.DTO
 {
     public class RegisterDTO
     {
+        public Guid Id { get; set; }
         public string UserName { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;

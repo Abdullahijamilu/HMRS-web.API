@@ -5,7 +5,7 @@ namespace HMRS_web.API.DTO
 {
     public class ECreateDTO
     {
-      
+        public Guid Id { get; set; }
         [Required]
         public string FullName { get; set; } = null!;
         [Required]
@@ -21,7 +21,7 @@ namespace HMRS_web.API.DTO
         [Required]
         public string? Password { get; set; }
         [Required]
-        public string? Role { get; set; }
-        public object Id { get; internal set; }
+        public Guid JobRoleId { get; set; }
+        //public object Id { get; internal set; }
     }
 }
