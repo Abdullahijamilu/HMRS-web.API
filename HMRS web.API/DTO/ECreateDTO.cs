@@ -1,27 +1,38 @@
-﻿using System.ComponentModel.DataAnnotations;
-using HMRS_web.API.Models;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace HMRS_web.API.DTO
 {
     public class ECreateDTO
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } // Employee ID (auto-generated)
+
         [Required]
-        public string FullName { get; set; } = null!;
+        [StringLength(100)]
+        public string FullName { get; set; } = null!; // e.g., "Sarah Jones"
+
+        [Phone]
+        public string? Phone { get; set; } // e.g., "555-1234"
+
+        [StringLength(200)]
+        public string? Address { get; set; } // e.g., "123 Main St"
+
         [Required]
-        public string? Phone { get; set; }
+        public Guid DepartmentId { get; set; } // Department ID
+
         [Required]
-        public string? Address { get; set; }
-        public Guid? DepartmentId { get; set; }
+        public Guid JobRoleId { get; set; } // Job role ID
+
         [Required]
-        public DateOnly? HireDate { get; set; }
-        public string? UserName { get; set; }
-        [Required]
-        public string? Email { get; set; }
-        [Required]
-        public string? Password { get; set; }
-        [Required]
-        public Guid JobRoleId { get; set; }
-        //public object Id { get; internal set; }
+        public DateOnly? HireDate { get; set; } // e.g., "2024-07-01"
+
+        public string? UserName { get; set; } // Optional username for account
+
+        [EmailAddress]
+        public string? Email { get; set; } // Optional email for account
+
+        public string? Password { get; set; } // Optional password for account
+
+        public string? Role { get; set; } // Optional role, e.g., "Employee"
     }
 }

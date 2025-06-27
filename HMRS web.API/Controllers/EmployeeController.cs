@@ -1,182 +1,260 @@
-﻿using System.Data;
-using HMRS_web.API.DTO;
+﻿using HMRS_web.API.DTO;
 using HMRS_web.API.Models;
 using HMRS_web.API.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HMRS_web.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize] // Requires JWT token
     public class EmployeeController : ControllerBase
     {
-        private readonly AuthenticateServices services;
-        private readonly HmrsContext context;
+        private readonly AuthenticateServices _services;
+        private readonly HmrsContext _context;
 
         public EmployeeController(AuthenticateServices services, HmrsContext context)
         {
-            this.services = services;
-            this.context = context;
+            _services = services; // Initialize authentication service
+            _context = context; // Initialize database context
         }
 
-        public object Id { get; private set; }
-
-        [HttpPost]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> CreateEmployee([FromBody] ECreateDTO eCreate)
+        // GET: api/Employee
+        // Returns all employees
+        [HttpGet]
+        public async Task<IActionResult> GetEmployees()
         {
-            if (eCreate == null || string.IsNullOrEmpty(eCreate.UserName) || string.IsNullOrEmpty(eCreate.Email) || string.IsNullOrEmpty(eCreate.Password))
-            {
-                var registerdto = new RegisterDTO
-                {
-                    UserName = eCreate.UserName,
-                    Email = eCreate.Email,
-                    Password = eCreate.Password,
-                    Role = eCreate.Role,
-                    Id = eCreate.Id
-                };
-
-                var result = await this.services.RegisterUser(registerdto);
-                if (!result.Succeeded)
-                {
-                    return BadRequest(result.Errors);
-                }
-
-                var user = await this.context.Users.FirstOrDefaultAsync(u => u.UserName == eCreate.UserName);
-                var userId = user.Id;
-                var role = eCreate.Role;
-            }
-
-            var employee = new Employee
-            {
-                FullName = eCreate.FullName,
-                HireDate = eCreate.HireDate,
-                Address = eCreate.Address,
-                Phone = eCreate.Phone,
-                DepartmentId = eCreate.DepartmentId,
-            };
-            this.context.Add(employee);
-            await this.context.SaveChangesAsync();
-
-            var readDto = await this.context.Employees
-                .Where(e => e.Id == employee.Id)
+            var employees = await _context.Employees
                 .Select(e => new EReadDTO
                 {
+                    Id = e.Id,
                     FullName = e.FullName,
                     Phone = e.Phone,
                     Address = e.Address,
+                    HireDate = e.HireDate.HasValue ? new DateTime(e.HireDate.Value.Year, e.HireDate.Value.Month, e.HireDate.Value.Day) : DateTime.MinValue,
                     DepartmentId = e.DepartmentId,
-                    HireDate = e.HireDate.HasValue ? new DateTime(e.HireDate.Value.Year, e.HireDate.Value.Month, e.HireDate.Value.Day) : DateTime.MinValue,
-                    DepartmentName = e.Department != null ? e.Department.Name : null,
-                    UserName = e.User != null ? e.User.UserName : null
-                })
-                .FirstOrDefaultAsync();
-            return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, readDto);
-        }
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<EReadDTO>>> GetEmployee()
-        {
-            var employees = await this.context.Employees
-                .Select(e => new EReadDTO
-                {
-                    FullName = e.FullName,
-                    JobRole = e.JobRole,
-                    HireDate = e.HireDate.HasValue ? new DateTime(e.HireDate.Value.Year, e.HireDate.Value.Month, e.HireDate.Value.Day) : DateTime.MinValue,
-                    DepartmentName = e.Department != null ? e.Department.Name : null,
+                    DepartmentName = e.Department != null ? e.Department.Name : "Unknown",
+                    JobRoleId = e.JobRoleId,
+                    JobRoleTitle = e.JobRole != null ? e.JobRole.Title : "Unknown",
                     UserName = e.User != null ? e.User.UserName : null,
-                    Role = this.context.UserRoles
+                    Role = _context.UserRoles
                         .Where(ur => ur.UserId == e.UserId)
-                        .Join(this.context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+                        .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
                         .FirstOrDefault()
                 })
                 .ToListAsync();
 
-            return Ok(employees);
+            return Ok(employees); // Returns 200 OK with employee list
         }
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<EReadDTO>> GetEmployee(Guid id)
-        //{
-        //    var employee = await this.context.Employees
-        //        .Where(e => e.Id == id)
-        //        .Select(e => new EReadDTO
-        //        {
-        //            FullName = e.FullName,
-        //            Address = e.Address,
-        //            HireDate = e.HireDate.HasValue ? e.HireDate.Value.ToDateTime(TimeOnly.MinValue) : DateTime.MinValue,
-        //            DepartmentName = e.Department.Name,
-        //            UserName = e.User != null ? e.User.UserName : null,
-        //            Role = this.context.UserRoles
-        //                .Where(ur => ur.UserId == e.UserId)
-        //                .Join(this.context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
-        //                .FirstOrDefault()
-        //        })
-        //        .FirstOrDefaultAsync();
 
-        //    if (employee == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return Ok(employee);
-        //}
-
+        // GET: api/Employee/123e4567-e89b-12d3-a456-426614174000
+        // Returns one employee by ID
         [HttpGet("{id}")]
-        public async Task<ActionResult<EReadDTO>> GetEmployee(Guid id)
+        public async Task<IActionResult> GetEmployee(Guid id)
         {
-            var employee = await this.context.Employees
+            var employee = await _context.Employees
                 .Where(e => e.Id == id)
                 .Select(e => new EReadDTO
                 {
+                    Id = e.Id,
                     FullName = e.FullName,
+                    Phone = e.Phone,
                     Address = e.Address,
                     HireDate = e.HireDate.HasValue ? new DateTime(e.HireDate.Value.Year, e.HireDate.Value.Month, e.HireDate.Value.Day) : DateTime.MinValue,
-                    DepartmentName = e.Department.Name,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department != null ? e.Department.Name : "Unknown",
+                    JobRoleId = e.JobRoleId,
+                    JobRoleTitle = e.JobRole != null ? e.JobRole.Title : "Unknown",
                     UserName = e.User != null ? e.User.UserName : null,
-                    Role = this.context.UserRoles
+                    Role = _context.UserRoles
                         .Where(ur => ur.UserId == e.UserId)
-                        .Join(this.context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+                        .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
                         .FirstOrDefault()
                 })
                 .FirstOrDefaultAsync();
 
             if (employee == null)
             {
-                return NotFound();
+                return NotFound(); // Returns 404 if not found
             }
 
-            return Ok(employee);
+            return Ok(employee); // Returns 200 OK with employee
         }
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Manager")]
-        public async Task<IActionResult> UpdateEmployee(Guid id, EUpdateDTO dto)
+
+        // POST: api/Employee
+        // Creates a new employee
+        [HttpPost]
+        [Authorize(Roles = "Admin,Manager")] // Only Admins or Managers can create
+        public async Task<IActionResult> CreateEmployee([FromBody] ECreateDTO dto)
         {
-            if (id != dto.Id)  
+            // Validate DepartmentId and JobRoleId
+            if (!await _context.Departments.AnyAsync(d => d.Id == dto.DepartmentId))
             {
-                return BadRequest("ID mismatch");
+                return BadRequest("Invalid DepartmentId");
+            }
+            if (!await _context.JobRoles.AnyAsync(jr => jr.Id == dto.JobRoleId))
+            {
+                return BadRequest("Invalid JobRoleId");
             }
 
-            var employee = await this.context.Employees.FindAsync(id);
+            string? userId = null;
+            string? role = null;
+            if (!string.IsNullOrEmpty(dto.UserName) && !string.IsNullOrEmpty(dto.Email) && !string.IsNullOrEmpty(dto.Password))
+            {
+                var registerDto = new RegisterDTO
+                {
+                    UserName = dto.UserName,
+                    Email = dto.Email,
+                    Password = dto.Password,
+                    Role = dto.Role ?? "Employee" // Default to Employee role
+                };
+
+                var result = await _services.RegisterUser(registerDto);
+                if (!result.Succeeded)
+                {
+                    return BadRequest(result.Errors); // Returns 400 with errors
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == dto.UserName);
+                userId = user?.Id;
+                role = registerDto.Role;
+            }
+
+            var employee = new Employee
+            {
+                Id = Guid.NewGuid(), // Generate unique ID
+                FullName = dto.FullName,
+                Phone = dto.Phone,
+                Address = dto.Address,
+                DepartmentId = dto.DepartmentId,
+                JobRoleId = dto.JobRoleId,
+                HireDate = dto.HireDate,
+                UserId = userId
+            };
+
+            _context.Employees.Add(employee);
+            await _context.SaveChangesAsync();
+
+            var readDto = new EReadDTO
+            {
+                Id = employee.Id,
+                FullName = employee.FullName,
+                Phone = employee.Phone,
+                Address = employee.Address,
+                HireDate = employee.HireDate.HasValue ? new DateTime(employee.HireDate.Value.Year, employee.HireDate.Value.Month, employee.HireDate.Value.Day) : DateTime.MinValue,
+                DepartmentId = employee.DepartmentId,
+                DepartmentName = (await _context.Departments.FindAsync(employee.DepartmentId))?.Name ?? "Unknown",
+                JobRoleId = employee.JobRoleId,
+                JobRoleTitle = (await _context.JobRoles.FindAsync(employee.JobRoleId))?.Title ?? "Unknown",
+                UserName = employee.User?.UserName,
+                Role = role
+            };
+
+            return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, readDto); // Returns 201 Created
+        }
+
+        // PUT: api/Employee/123e4567-e89b-12d3-a456-426614174000
+        // Updates an employee
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Manager")] // Only Admins or Managers can update
+        public async Task<IActionResult> UpdateEmployee(Guid id, [FromBody] EUpdateDTO dto)
+        {
+            if (id != dto.Id)
+            {
+                return BadRequest("Employee ID mismatch");
+            }
+
+            var employee = await _context.Employees.FindAsync(id);
             if (employee == null)
             {
-                return NotFound();
+                return NotFound(); // Returns 404 if not found
             }
 
-            
-            employee.FullName = dto.FullName;
-            employee.Phone = dto.Phone;
-            employee.Address = dto.Address;
-            employee.DepartmentId = dto.DepartmentId;
+            if (!string.IsNullOrEmpty(dto.FullName)) employee.FullName = dto.FullName;
+            if (!string.IsNullOrEmpty(dto.Phone)) employee.Phone = dto.Phone;
+            if (!string.IsNullOrEmpty(dto.Address)) employee.Address = dto.Address;
+            if (dto.DepartmentId.HasValue)
+            {
+                if (!await _context.Departments.AnyAsync(d => d.Id == dto.DepartmentId.Value))
+                {
+                    return BadRequest("Invalid DepartmentId");
+                }
+                employee.DepartmentId = dto.DepartmentId.Value;
+            }
+            if (dto.JobRoleId.HasValue)
+            {
+                if (!await _context.JobRoles.AnyAsync(jr => jr.Id == dto.JobRoleId.Value))
+                {
+                    return BadRequest("Invalid JobRoleId");
+                }
+                employee.JobRoleId = dto.JobRoleId.Value;
+            }
+            if (dto.HireDate.HasValue) employee.HireDate = dto.HireDate;
 
-            
-            this.context.Employees.Update(employee);
-            await this.context.SaveChangesAsync();
+            _context.Employees.Update(employee);
+            await _context.SaveChangesAsync();
 
-            return Ok(employee);   
+            return NoContent(); // Returns 204 No Content
+        }
+
+        // DELETE: api/Employee/123e4567-e89b-12d3-a456-426614174000
+        // Deletes an employee
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] // Only Admins can delete
+        public async Task<IActionResult> DeleteEmployee(Guid id)
+        {
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee == null)
+            {
+                return NotFound(); // Returns 404 if not found
+            }
+
+            _context.Employees.Remove(employee);
+            await _context.SaveChangesAsync();
+
+            return NoContent(); // Returns 204 No Content
+        }
+
+        // GET: api/Employee/search?name=Sarah
+        // Searches employees by name
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchEmployees([FromQuery] string? name)
+        {
+            var query = _context.Employees.AsQueryable();
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                name = name.ToLower();
+                query = query.Where(e => e.FullName.ToLower().Contains(name));
+            }
+
+            var employees = await query
+                .Select(e => new EReadDTO
+                {
+                    Id = e.Id,
+                    FullName = e.FullName,
+                    Phone = e.Phone,
+                    Address = e.Address,
+                    HireDate = e.HireDate.HasValue ? new DateTime(e.HireDate.Value.Year, e.HireDate.Value.Month, e.HireDate.Value.Day) : DateTime.MinValue,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department != null ? e.Department.Name : "Unknown",
+                    JobRoleId = e.JobRoleId,
+                    JobRoleTitle = e.JobRole != null ? e.JobRole.Title : "Unknown",
+                    UserName = e.User != null ? e.User.UserName : null,
+                    Role = _context.UserRoles
+                        .Where(ur => ur.UserId == e.UserId)
+                        .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r.Name)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return Ok(employees); // Returns 200 OK with search results
         }
     }
 }
-

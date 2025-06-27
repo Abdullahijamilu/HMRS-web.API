@@ -1,16 +1,15 @@
-﻿using HMRS_web.API.Models;
+﻿using System;
 
 namespace HMRS_web.API.DTO
 {
     public class JobRoleReadDTO
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } // Job role ID
 
-        public string Title { get; set; } = null!;
+        public string Title { get; set; } = null!; // e.g., "Software Developer"
 
-        public string? Description { get; set; }
+        public string? Description { get; set; } // Optional description
 
-        public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
+        public int EmployeeCount { get; set; } // Number of employees with this role
     }
 }
-

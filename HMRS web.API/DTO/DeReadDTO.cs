@@ -1,15 +1,15 @@
-﻿using HMRS_web.API.Models;
+﻿using System;
 
 namespace HMRS_web.API.DTO
 {
     public class DeReadDTO
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } // Department ID
 
-        public string Name { get; set; } = null!;
+        public string Name { get; set; } = null!; // e.g., "IT"
 
-        public string? Description { get; set; }
+        public string? Description { get; set; } // Optional description
 
-        public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
+        public int EmployeeCount { get; set; } // Number of employees in department
     }
 }

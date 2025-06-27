@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using HMRS_web.API.Models;
 
-namespace HMRS_web.API.Models;
-
-public partial class HmrsContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
-{ 
-        
+namespace HMRS_web.API.Models
+{
+    public partial class HmrsContext : IdentityDbContext<ApplicationUser, IdentityRole, string>
+    {
         public HmrsContext(DbContextOptions<HmrsContext> options)
             : base(options)
         {
@@ -21,18 +19,16 @@ public partial class HmrsContext : IdentityDbContext<ApplicationUser, IdentityRo
         public virtual DbSet<JobRole> JobRoles { get; set; }
         public virtual DbSet<LeaveRequest> LeaveRequests { get; set; }
 
-       
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder); // ✅ Required for Identity to work
+            base.OnModelCreating(modelBuilder); // Required for Identity
 
             modelBuilder.Entity<Department>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-                entity.Property(e => e.Description).HasMaxLength(255);
                 entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(255);
             });
 
             modelBuilder.Entity<Employee>(entity =>
@@ -45,12 +41,16 @@ public partial class HmrsContext : IdentityDbContext<ApplicationUser, IdentityRo
                 entity.Property(e => e.Phone).HasMaxLength(20);
                 entity.Property(e => e.UserId).HasMaxLength(450);
 
-                entity.HasOne(d => d.Department).WithMany(p => p.Employees)
+                entity.HasOne(d => d.Department)
+                    .WithMany(p => p.Employees)
                     .HasForeignKey(d => d.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict) // Prevent deletion if employees exist
                     .HasConstraintName("FK_Employees_Department");
 
-                entity.HasOne(d => d.JobRole).WithMany(p => p.Employees)
+                entity.HasOne(d => d.JobRole)
+                    .WithMany(p => p.Employees)
                     .HasForeignKey(d => d.JobRoleId)
+                    .OnDelete(DeleteBehavior.Restrict) // Prevent deletion if employees exist
                     .HasConstraintName("FK_Employees_JobRole");
             });
 
@@ -60,12 +60,14 @@ public partial class HmrsContext : IdentityDbContext<ApplicationUser, IdentityRo
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
                 entity.Property(e => e.Remarks).HasMaxLength(500);
 
-                entity.HasOne(d => d.Employee).WithMany(p => p.EvaluationEmployees)
+                entity.HasOne(d => d.Employee)
+                    .WithMany(p => p.EvaluationEmployees)
                     .HasForeignKey(d => d.EmployeeId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Evaluations_Employee");
 
-                entity.HasOne(d => d.Reviewer).WithMany(p => p.EvaluationReviewers)
+                entity.HasOne(d => d.Reviewer)
+                    .WithMany(p => p.EvaluationReviewers)
                     .HasForeignKey(d => d.ReviewerId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Evaluations_Reviewer");
@@ -86,8 +88,9 @@ public partial class HmrsContext : IdentityDbContext<ApplicationUser, IdentityRo
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
-                entity.Property(e => e.Description).HasMaxLength(255);
                 entity.Property(e => e.Title).HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(255);
+               // entity.Ignore(e => e.JobRoleId); // Ignore invalid JobRoleId property
             });
 
             modelBuilder.Entity<LeaveRequest>(entity =>
@@ -98,18 +101,21 @@ public partial class HmrsContext : IdentityDbContext<ApplicationUser, IdentityRo
                 entity.Property(e => e.RequestedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
                 entity.Property(e => e.Status).HasMaxLength(20).HasDefaultValue("Pending");
 
-                entity.HasOne(d => d.ApprovedByNavigation).WithMany(p => p.LeaveRequestApprovedByNavigations)
+                entity.HasOne(d => d.ApprovedByNavigation)
+                    .WithMany(p => p.LeaveRequestApprovedByNavigations)
                     .HasForeignKey(d => d.ApprovedBy)
                     .HasConstraintName("FK_LeaveRequests_ApprovedBy");
 
-                entity.HasOne(d => d.Employee).WithMany(p => p.LeaveRequestEmployees)
+                entity.HasOne(d => d.Employee)
+                    .WithMany(p => p.LeaveRequestEmployees)
                     .HasForeignKey(d => d.EmployeeId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_LeaveRequests_Employee");
             });
 
-        OnModelCreatingPartial(modelBuilder);
+            OnModelCreatingPartial(modelBuilder);
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+    }
 }

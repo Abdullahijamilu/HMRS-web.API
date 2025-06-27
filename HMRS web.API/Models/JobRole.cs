@@ -1,15 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace HMRS_web.API.Models;
 
 public partial class JobRole
 {
-    public Guid Id { get; set; }
+    [Key]
+    public Guid Id { get; set; } // Primary key (GUID)
 
-    public string Title { get; set; } = null!;
+    [Required]
+    [StringLength(100)]
+    public string Title { get; set; } = null!; // e.g., "Software Developer"
 
-    public string? Description { get; set; }
+    [StringLength(255)]
+    public string? Description { get; set; } // e.g., "Develops software applications"
 
-    public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
+    public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>(); // Employees with this role
 }

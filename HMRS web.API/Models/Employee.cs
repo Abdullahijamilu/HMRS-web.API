@@ -1,41 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HMRS_web.API.Models;
-
-public partial class Employee
+namespace HMRS_web.API.Models
 {
-    public Guid Id { get; set; }
+    public partial class Employee
+    {
+        [Key]
+        public Guid Id { get; set; } // Primary key (GUID)
 
-    public string UserId { get; set; } = null!;
+        public string? UserId { get; set; } // Nullable to allow employees without accounts
 
-    public string FullName { get; set; } = null!;
+        [Required]
+        [StringLength(100)]
+        public string FullName { get; set; } = null!; // e.g., "Sarah Jones"
 
-    public string? Phone { get; set; }
+        [StringLength(20)]
+        [Phone]
+        public string? Phone { get; set; } // e.g., "555-1234"
 
-    public string? Address { get; set; }
+        [StringLength(200)]
+        public string? Address { get; set; } // e.g., "123 Main St"
 
-    public Guid? DepartmentId { get; set; }
+        public Guid? DepartmentId { get; set; } // Foreign key to Department
 
-    public Guid? JobRoleId { get; set; }
+        public Guid? JobRoleId { get; set; } // Foreign key to JobRole
 
-    public DateOnly? HireDate { get; set; }
+        public DateOnly? HireDate { get; set; } // e.g., "2024-07-01"
 
-    public string? CvfilePath { get; set; }
-    [ForeignKey("DepartmentId")]
-    public virtual Department? Department { get; set; }
-    [ForeignKey("UploadedBy")]
-    public virtual ApplicationUser User { get; set; }
+        [StringLength(200)]
+        public string? CvfilePath { get; set; } // Path to CV file
 
-    public virtual ICollection<Evaluation> EvaluationEmployees { get; set; } = new List<Evaluation>();
+        [ForeignKey("DepartmentId")]
+        public virtual Department? Department { get; set; } // Navigation to Department
 
-    public virtual ICollection<Evaluation> EvaluationReviewers { get; set; } = new List<Evaluation>();
+        [ForeignKey("JobRoleId")]
+        public virtual JobRole? JobRole { get; set; } // Navigation to JobRole
 
-    public virtual JobRole? JobRole { get; set; }
+        [ForeignKey("UserId")]
+        public virtual ApplicationUser? User { get; set; } // Navigation to ApplicationUser
 
-    public virtual ICollection<LeaveRequest> LeaveRequestApprovedByNavigations { get; set; } = new List<LeaveRequest>();
+        public virtual ICollection<Evaluation> EvaluationEmployees { get; set; } = new List<Evaluation>();
 
-    public virtual ICollection<LeaveRequest> LeaveRequestEmployees { get; set; } = new List<LeaveRequest>();
+        public virtual ICollection<Evaluation> EvaluationReviewers { get; set; } = new List<Evaluation>();
+
+        public virtual ICollection<LeaveRequest> LeaveRequestApprovedByNavigations { get; set; } = new List<LeaveRequest>();
+
+        public virtual ICollection<LeaveRequest> LeaveRequestEmployees { get; set; } = new List<LeaveRequest>();
+    }
 }
