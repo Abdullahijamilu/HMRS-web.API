@@ -28,19 +28,19 @@ namespace HMRS_web.API.Models
 
         public Guid? JobRoleId { get; set; } // Foreign key to JobRole
 
-        public DateOnly? HireDate { get; set; } // e.g., "2024-07-01"
+        public DateOnly? HireDate { get; set; } 
 
         [StringLength(200)]
-        public string? CvfilePath { get; set; } // Path to CV file
+        public string? CvfilePath { get; set; } 
 
         [ForeignKey("DepartmentId")]
-        public virtual Department? Department { get; set; } // Navigation to Department
+        public virtual Department? Department { get; set; } 
 
         [ForeignKey("JobRoleId")]
-        public virtual JobRole? JobRole { get; set; } // Navigation to JobRole
+        public virtual JobRole? JobRole { get; set; } 
 
         [ForeignKey("UserId")]
-        public virtual ApplicationUser? User { get; set; } // Navigation to ApplicationUser
+        public virtual ApplicationUser? User { get; set; } 
 
         public virtual ICollection<Evaluation> EvaluationEmployees { get; set; } = new List<Evaluation>();
 
@@ -49,5 +49,10 @@ namespace HMRS_web.API.Models
         public virtual ICollection<LeaveRequest> LeaveRequestApprovedByNavigations { get; set; } = new List<LeaveRequest>();
 
         public virtual ICollection<LeaveRequest> LeaveRequestEmployees { get; set; } = new List<LeaveRequest>();
+
+        public static implicit operator Employee?(string? v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

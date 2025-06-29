@@ -26,8 +26,7 @@ namespace HMRS_web.API
             builder.Logging.ClearProviders();
             builder.Logging.AddSerilog(logger);
 
-            // 2. Add services to the container
-            // MVC and API services
+            
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -43,6 +42,13 @@ namespace HMRS_web.API
                 .AddDefaultTokenProviders();
 
             // JWT Authentication
+            var jwtKey = builder.Configuration["Jwt:Key"];
+            if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
+            {
+                logger.Error("JWT Key is missing or too short in appsettings.json. It must be at least 32 characters.");
+                throw new InvalidOperationException("JWT Key is missing or too short in appsettings.json. It must be at least 32 characters.");
+            }
+
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -58,12 +64,11 @@ namespace HMRS_web.API
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = builder.Configuration["Jwt:Issuer"],
                     ValidAudience = builder.Configuration["Jwt:Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
                 };
             });
 
-            // Custom services
+        
             builder.Services.AddScoped<JwtServices>();
             builder.Services.AddScoped<IAuthenticateServices, AuthenticateServices>();
 
@@ -85,6 +90,7 @@ namespace HMRS_web.API
                         if (!await roleManager.RoleExistsAsync(role))
                         {
                             await roleManager.CreateAsync(new IdentityRole(role));
+                            logger.Information("Seeded role: {Role}", role);
                         }
                     }
 
@@ -105,9 +111,10 @@ namespace HMRS_web.API
                                 Description = "Human Resources"
                             });
                         await dbContext.SaveChangesAsync();
+                        logger.Information("Seeded departments: IT, HR");
                     }
 
-                    // Seed job roles
+                    
                     if (!await dbContext.JobRoles.AnyAsync())
                     {
                         dbContext.JobRoles.AddRange(
@@ -124,16 +131,17 @@ namespace HMRS_web.API
                                 Description = "Manages human resources"
                             });
                         await dbContext.SaveChangesAsync();
+                        logger.Information("Seeded job roles: Software Developer, HR Manager");
                     }
                 }
                 catch (Exception ex)
                 {
                     logger.Error(ex, "Error seeding initial data");
-                    throw; // Re-throw to ensure errors are visible during development
+                    throw; 
                 }
             }
 
-            // 4. Configure middleware pipeline
+            
             if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -141,12 +149,12 @@ namespace HMRS_web.API
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HRMS API v1"));
             }
 
-            app.UseHttpsRedirection(); // Redirects HTTP to HTTPS (disable temporarily for testing if needed)
-            app.UseAuthentication(); // Must come before UseAuthorization
+            
+            app.UseAuthentication(); 
             app.UseAuthorization();
             app.MapControllers();
 
-            // 5. Run the application
+            
             await app.RunAsync();
         }
     }

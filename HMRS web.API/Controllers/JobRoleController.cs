@@ -9,20 +9,19 @@ using System.Threading.Tasks;
 
 namespace HMRS_web.API.Controllers
 {
-    [Route("api/[controller]")] // Base URL: api/JobRole
+    [Route("api/[controller]")] 
     [ApiController]
-    [Authorize] // Requires JWT token
+    [Authorize] 
     public class JobRoleController : ControllerBase
     {
         private readonly HmrsContext _context;
 
         public JobRoleController(HmrsContext context)
         {
-            _context = context; // Initialize database context
+            _context = context; 
         }
 
-        // GET: api/JobRole
-        // Returns all job roles
+        
         [HttpGet]
         public async Task<IActionResult> GetJobRoles()
         {
@@ -32,15 +31,14 @@ namespace HMRS_web.API.Controllers
                     Id = j.Id,
                     Title = j.Title,
                     Description = j.Description,
-                    EmployeeCount = j.Employees.Count // Number of employees
+                    EmployeeCount = j.Employees.Count 
                 })
                 .ToListAsync();
 
-            return Ok(jobRoles); // Returns 200 OK with job role list
+            return Ok(jobRoles); 
         }
 
-        // GET: api/JobRole/123e4567-e89b-12d3-a456-426614174000
-        // Returns one job role by ID
+        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetJobRole(Guid id)
         {
@@ -57,21 +55,20 @@ namespace HMRS_web.API.Controllers
 
             if (jobRole == null)
             {
-                return NotFound(); // Returns 404 if not found
+                return NotFound(); 
             }
 
-            return Ok(jobRole); // Returns 200 OK with job role
+            return Ok(jobRole); 
         }
 
-        // POST: api/JobRole
-        // Creates a new job role
+        
         [HttpPost]
-        [Authorize(Roles = "Admin")] // Only Admins can create
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> CreateJobRole([FromBody] JobRoleCreateDTO dto)
         {
             var jobRole = new JobRole
             {
-                Id = Guid.NewGuid(), // Generate unique ID
+                Id = Guid.NewGuid(), 
                 Title = dto.Title,
                 Description = dto.Description
             };
@@ -84,16 +81,15 @@ namespace HMRS_web.API.Controllers
                 Id = jobRole.Id,
                 Title = jobRole.Title,
                 Description = jobRole.Description,
-                EmployeeCount = 0 // New job role has no employees
+                EmployeeCount = 0 
             };
 
-            return CreatedAtAction(nameof(GetJobRole), new { id = jobRole.Id }, readDto); // Returns 201 Created
+            return CreatedAtAction(nameof(GetJobRole), new { id = jobRole.Id }, readDto); 
         }
 
-        // PUT: api/JobRole/123e4567-e89b-12d3-a456-426614174000
-        // Updates a job role
+        
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")] // Only Admins can update
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> UpdateJobRole(Guid id, [FromBody] JobRoleUpdateDTO dto)
         {
             if (id != dto.Id)
@@ -104,7 +100,7 @@ namespace HMRS_web.API.Controllers
             var jobRole = await _context.JobRoles.FindAsync(id);
             if (jobRole == null)
             {
-                return NotFound(); // Returns 404 if not found
+                return NotFound(); 
             }
 
             if (!string.IsNullOrEmpty(dto.Title)) jobRole.Title = dto.Title;
@@ -112,19 +108,18 @@ namespace HMRS_web.API.Controllers
 
             await _context.SaveChangesAsync();
 
-            return NoContent(); // Returns 204 No Content
+            return NoContent(); 
         }
 
-        // DELETE: api/JobRole/123e4567-e89b-12d3-a456-426614174000
-        // Deletes a job role
+        
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")] // Only Admins can delete
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> DeleteJobRole(Guid id)
         {
             var jobRole = await _context.JobRoles.FindAsync(id);
             if (jobRole == null)
             {
-                return NotFound(); // Returns 404 if not found
+                return NotFound(); 
             }
 
             if (jobRole.Employees.Any())
@@ -135,11 +130,10 @@ namespace HMRS_web.API.Controllers
             _context.JobRoles.Remove(jobRole);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // Returns 204 No Content
+            return NoContent(); 
         }
 
-        // GET: api/JobRole/search?title=Developer
-        // Searches job roles by title
+       
         [HttpGet("search")]
         public async Task<IActionResult> SearchJobRoles([FromQuery] string? title)
         {
@@ -161,7 +155,7 @@ namespace HMRS_web.API.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(jobRoles); // Returns 200 OK with search results
+            return Ok(jobRoles); 
         }
     }
 }

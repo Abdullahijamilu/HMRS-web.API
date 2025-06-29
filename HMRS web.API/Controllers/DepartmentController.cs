@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace HMRS_web.API.Controllers
 {
-    [Route("api/[controller]")] // Base URL: api/Department
+    [Route("api/[controller]")] 
     [ApiController]
-    [Authorize] // Requires JWT token
+    [Authorize] 
     public class DepartmentController : ControllerBase
     {
         private readonly HmrsContext _context;
@@ -21,8 +21,7 @@ namespace HMRS_web.API.Controllers
             _context = context; // Initialize database context
         }
 
-        // GET: api/Department
-        // Returns all departments with employee counts
+        
         [HttpGet]
         public async Task<IActionResult> GetDepartments()
         {
@@ -39,8 +38,7 @@ namespace HMRS_web.API.Controllers
             return Ok(departments); // Returns 200 OK with department list
         }
 
-        // GET: api/Department/123e4567-e89b-12d3-a456-426614174000
-        // Returns one department by ID
+        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDepartment(Guid id)
         {
@@ -63,8 +61,7 @@ namespace HMRS_web.API.Controllers
             return Ok(department); // Returns 200 OK with department
         }
 
-        // POST: api/Department
-        // Creates a new department
+        
         [HttpPost]
         [Authorize(Roles = "Admin")] // Only Admins can create
         public async Task<IActionResult> CreateDepartment([FromBody] DeCreateDTO dto)
@@ -90,8 +87,7 @@ namespace HMRS_web.API.Controllers
             return CreatedAtAction(nameof(GetDepartment), new { id = department.Id }, readDto); // Returns 201 Created
         }
 
-        // PUT: api/Department/123e4567-e89b-12d3-a456-426614174000
-        // Updates a department
+        
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")] // Only Admins can update
         public async Task<IActionResult> UpdateDepartment(Guid id, [FromBody] DeUpdateDTO dto)
@@ -115,8 +111,7 @@ namespace HMRS_web.API.Controllers
             return NoContent(); // Returns 204 No Content
         }
 
-        // DELETE: api/Department/123e4567-e89b-12d3-a456-426614174000
-        // Deletes a department
+       
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")] // Only Admins can delete
         public async Task<IActionResult> DeleteDepartment(Guid id)
@@ -138,8 +133,7 @@ namespace HMRS_web.API.Controllers
             return NoContent(); // Returns 204 No Content
         }
 
-        // GET: api/Department/search?name=IT
-        // Searches departments by name
+       
         [HttpGet("search")]
         public async Task<IActionResult> SearchDepartments([FromQuery] string? name)
         {

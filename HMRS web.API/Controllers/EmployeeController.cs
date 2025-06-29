@@ -13,7 +13,7 @@ namespace HMRS_web.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Requires JWT token
+    [Authorize] 
     public class EmployeeController : ControllerBase
     {
         private readonly AuthenticateServices _services;
@@ -21,12 +21,11 @@ namespace HMRS_web.API.Controllers
 
         public EmployeeController(AuthenticateServices services, HmrsContext context)
         {
-            _services = services; // Initialize authentication service
-            _context = context; // Initialize database context
+            _services = services; 
+            _context = context; 
         }
 
-        // GET: api/Employee
-        // Returns all employees
+        
         [HttpGet]
         public async Task<IActionResult> GetEmployees()
         {
@@ -50,11 +49,9 @@ namespace HMRS_web.API.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(employees); // Returns 200 OK with employee list
+            return Ok(employees); 
         }
 
-        // GET: api/Employee/123e4567-e89b-12d3-a456-426614174000
-        // Returns one employee by ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEmployee(Guid id)
         {
@@ -81,19 +78,18 @@ namespace HMRS_web.API.Controllers
 
             if (employee == null)
             {
-                return NotFound(); // Returns 404 if not found
+                return NotFound(); 
             }
 
-            return Ok(employee); // Returns 200 OK with employee
+            return Ok(employee); 
         }
 
-        // POST: api/Employee
-        // Creates a new employee
+        
         [HttpPost]
-        [Authorize(Roles = "Admin,Manager")] // Only Admins or Managers can create
+        [Authorize(Roles = "Admin,Manager")] 
         public async Task<IActionResult> CreateEmployee([FromBody] ECreateDTO dto)
         {
-            // Validate DepartmentId and JobRoleId
+            
             if (!await _context.Departments.AnyAsync(d => d.Id == dto.DepartmentId))
             {
                 return BadRequest("Invalid DepartmentId");
@@ -156,13 +152,12 @@ namespace HMRS_web.API.Controllers
                 Role = role
             };
 
-            return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, readDto); // Returns 201 Created
+            return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, readDto); 
         }
 
-        // PUT: api/Employee/123e4567-e89b-12d3-a456-426614174000
-        // Updates an employee
+       
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Manager")] // Only Admins or Managers can update
+        [Authorize(Roles = "Admin,Manager")] 
         public async Task<IActionResult> UpdateEmployee(Guid id, [FromBody] EUpdateDTO dto)
         {
             if (id != dto.Id)
@@ -173,7 +168,7 @@ namespace HMRS_web.API.Controllers
             var employee = await _context.Employees.FindAsync(id);
             if (employee == null)
             {
-                return NotFound(); // Returns 404 if not found
+                return NotFound(); 
             }
 
             if (!string.IsNullOrEmpty(dto.FullName)) employee.FullName = dto.FullName;
@@ -203,10 +198,9 @@ namespace HMRS_web.API.Controllers
             return NoContent(); // Returns 204 No Content
         }
 
-        // DELETE: api/Employee/123e4567-e89b-12d3-a456-426614174000
-        // Deletes an employee
+        
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")] // Only Admins can delete
+        [Authorize(Roles = "Admin")] 
         public async Task<IActionResult> DeleteEmployee(Guid id)
         {
             var employee = await _context.Employees.FindAsync(id);
@@ -221,8 +215,7 @@ namespace HMRS_web.API.Controllers
             return NoContent(); // Returns 204 No Content
         }
 
-        // GET: api/Employee/search?name=Sarah
-        // Searches employees by name
+        
         [HttpGet("search")]
         public async Task<IActionResult> SearchEmployees([FromQuery] string? name)
         {

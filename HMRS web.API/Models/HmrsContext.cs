@@ -116,6 +116,11 @@ namespace HMRS_web.API.Models
             OnModelCreatingPartial(modelBuilder);
         }
 
+        internal async Task FindAsync(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }
